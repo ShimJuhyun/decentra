@@ -1,7 +1,7 @@
 # Decentra
 
 Decentra is a Decision-Oriented Machine Learning framework 
-that transforms predictive models into structured, actionable decision systems.
+for bridging predictive models and decision-making systems.
 
-It enables model interpretation, scorecard generation, and strategy integration 
-within a unified pipeline.
+It wraps existing models (e.g., LightGBM, EBM) and transforms them into 
+interpretable scorecards, decision policies, and strategy pipelines.
