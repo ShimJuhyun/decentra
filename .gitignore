@@ -1,0 +1,13 @@
+# Dot directories (e.g. .venv, .idea, .vscode, etc.)
+.*/
+
+# Keep .git tracked by git itself (this rule is implicit, but explicit for clarity)
+!.git/
+
+# CLAUDE.md
+CLAUDE.md
+
+# Python cache
+__pycache__/
+*.pyc
+*.egg-info/

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "decentra"
+version = "0.1.0"
+description = "Interpretable surrogate modeling and attribution calibration for black-box credit scoring"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn<1.8",
+    "lightgbm",
+    "shap",
+]
+
+[project.optional-dependencies]
+gam = ["interpret"]
+optbin = ["optbinning"]
+all = ["interpret", "optbinning"]
+dev = ["pytest", "jupyter", "matplotlib", "seaborn"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["decentra*"]
