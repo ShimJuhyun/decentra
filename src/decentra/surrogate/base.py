@@ -29,8 +29,6 @@ class BaseSurrogate(ABC):
     monotone_constraints : dict[str, int] or None
     """
 
-    training_stats_: TrainingStats = None
-
     @abstractmethod
     def fit(self, X, y_logit, *, eval_set=None, sample_weight=None):
         """Fit the surrogate on teacher's log-odds predictions.
@@ -63,6 +61,11 @@ class BaseSurrogate(ABC):
         contribs : ndarray of shape (n_samples, n_features)
             contribs[i, j] = contribution of feature j for sample i.
         """
+
+    def _check_is_fitted(self):
+        """Raise if the surrogate has not been fitted."""
+        if not hasattr(self, 'model_') or self.model_ is None:
+            raise RuntimeError("Not fitted. Call fit() first.")
 
     def _feature_names(self, X):
         """Extract feature names from X."""
@@ -125,6 +128,7 @@ class BaseSurrogate(ABC):
             ranking : ndarray of shape (n_samples, n_features), dtype=str
             adverse : list of ndarray[str]
         """
+        self._check_is_fitted()
         return {
             'predictions': self.predict(X),
             'contributions': self.contributions(X),
@@ -201,16 +205,6 @@ class BaseSurrogate(ABC):
         names = base_model.feature_name_
         used = [name for name, imp in zip(names, importances) if imp > threshold]
         return X[used]
-
-    def predict_with_contributions(self, X):
-        """Return predictions and contributions together.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,)
-        contribs : ndarray of shape (n_samples, n_features)
-        """
-        return self.predict(X), self.contributions(X)
 
     # ── Monotone detection (shared) ───────────────────────────────
 

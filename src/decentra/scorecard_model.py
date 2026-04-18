@@ -38,7 +38,6 @@ class FeatureRule:
         return scores
 
 
-@dataclass
 class ScorecardModel:
     """Standardised scorecard model: base_score + per-feature bin rules.
 
@@ -71,11 +70,14 @@ class ScorecardModel:
     >>> result['ranking']        # ndarray of str
     """
 
-    base_score: float = 0.0
-    features: List[FeatureRule] = field(default_factory=list)
-    mean_contributions_: np.ndarray = field(default=None, repr=False)
-    training_stats_: Optional[TrainingStats] = field(default=None, repr=False)
-    is_fitted_: bool = field(default=False, repr=False)
+    def __init__(self, base_score=0.0, features=None,
+                 mean_contributions_=None, training_stats_=None,
+                 is_fitted_=False):
+        self.base_score = base_score
+        self.features = features if features is not None else []
+        self.mean_contributions_ = mean_contributions_
+        self.training_stats_ = training_stats_
+        self.is_fitted_ = is_fitted_
 
     # ── fit / transform / fit_transform ───────────────────────
 
@@ -128,6 +130,8 @@ class ScorecardModel:
             adverse : list of ndarray[str]
                 Adverse features per sample (contrib < 0, sorted).
         """
+        if not self.is_fitted_:
+            raise RuntimeError("Not fitted. Call fit() first.")
         return {
             'predictions': self.predict(X),
             'contributions': self.contributions(X),

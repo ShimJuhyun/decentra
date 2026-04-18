@@ -139,9 +139,11 @@ class TreeSurrogate(BaseSurrogate):
         return self
 
     def predict(self, X):
+        self._check_is_fitted()
         return self.model_.predict(X)
 
     def contributions(self, X):
+        self._check_is_fitted()
         if self.max_depth == 1:
             return self.model_.predict(X, pred_contrib=True)[:, :-1]
         return np.array(shap.TreeExplainer(self.model_).shap_values(X))

@@ -16,6 +16,41 @@ _VALID_METHODS = [
 ]
 
 
+def _make_sklearn_model(method, alpha=1.0, l1_ratio=0.5):
+    """Create an sklearn regression model by name.
+
+    Parameters
+    ----------
+    method : str
+        One of ``_VALID_METHODS``.
+    alpha : float
+        Regularization strength (ignored for "ols" and "*cv" methods).
+    l1_ratio : float
+        ElasticNet mixing parameter.
+
+    Returns
+    -------
+    sklearn estimator
+    """
+    if method == "ols":
+        return LinearRegression()
+    if method == "ridge":
+        return Ridge(alpha=alpha)
+    if method == "ridgecv":
+        return RidgeCV()
+    if method == "lasso":
+        return Lasso(alpha=alpha, max_iter=10000)
+    if method == "lassocv":
+        return LassoCV(max_iter=10000, cv=5)
+    if method == "elasticnet":
+        return ElasticNet(alpha=alpha, l1_ratio=l1_ratio, max_iter=10000)
+    if method == "elasticnetcv":
+        return ElasticNetCV(l1_ratio=l1_ratio, max_iter=10000, cv=5)
+    raise ValueError(
+        f"method must be one of {_VALID_METHODS}, got '{method}'"
+    )
+
+
 class LinearSurrogate(BaseSurrogate):
     """Linear regression surrogate.
 
@@ -77,28 +112,7 @@ class LinearSurrogate(BaseSurrogate):
         self.monotone_correlations_ = None
 
     def _make_model(self):
-        m = self.method
-        if m == "ols":
-            return LinearRegression()
-        if m == "ridge":
-            return Ridge(alpha=self.alpha)
-        if m == "ridgecv":
-            return RidgeCV()
-        if m == "lasso":
-            return Lasso(alpha=self.alpha, max_iter=10000)
-        if m == "lassocv":
-            return LassoCV(max_iter=10000, cv=5)
-        if m == "elasticnet":
-            return ElasticNet(
-                alpha=self.alpha, l1_ratio=self.l1_ratio, max_iter=10000
-            )
-        if m == "elasticnetcv":
-            return ElasticNetCV(
-                l1_ratio=self.l1_ratio, max_iter=10000, cv=5
-            )
-        raise ValueError(
-            f"method must be one of {_VALID_METHODS}, got '{m}'"
-        )
+        return _make_sklearn_model(self.method, self.alpha, self.l1_ratio)
 
     def _scale(self, X_arr, fit=False):
         """Scale features if self.scale is True."""
@@ -176,6 +190,7 @@ class LinearSurrogate(BaseSurrogate):
         return np.abs(self.model_.coef_)
 
     def predict(self, X):
+        self._check_is_fitted()
         X_s = self._scale(np.asarray(X)) * self._sign_flips_
         return self.model_.predict(X_s)
 
@@ -193,6 +208,7 @@ class LinearSurrogate(BaseSurrogate):
 
     def contributions(self, X):
         """Centered contributions (SHAP-like: relative to training mean)."""
+        self._check_is_fitted()
         return self._raw_contributions(X) - self.mean_contributions_
 
 
@@ -263,26 +279,7 @@ class BinningSurrogate(BaseSurrogate):
         self.monotone_correlations_ = None
 
     def _make_model(self):
-        m = self.method
-        if m == "ols":
-            return LinearRegression()
-        if m == "ridge":
-            return Ridge(alpha=self.alpha)
-        if m == "ridgecv":
-            return RidgeCV()
-        if m == "lasso":
-            return Lasso(alpha=self.alpha, max_iter=10000)
-        if m == "lassocv":
-            return LassoCV(max_iter=10000, cv=5)
-        if m == "elasticnet":
-            return ElasticNet(
-                alpha=self.alpha, l1_ratio=self.l1_ratio, max_iter=10000
-            )
-        if m == "elasticnetcv":
-            return ElasticNetCV(
-                l1_ratio=self.l1_ratio, max_iter=10000, cv=5
-            )
-        raise ValueError(f"Unsupported method: '{m}'")
+        return _make_sklearn_model(self.method, self.alpha, self.l1_ratio)
 
     # ── Binning ───────────────────────────────────────────────
 
@@ -547,6 +544,7 @@ class BinningSurrogate(BaseSurrogate):
         return imp
 
     def predict(self, X):
+        self._check_is_fitted()
         return self.model_.predict(self._encode(np.asarray(X)))
 
     def _raw_contributions(self, X):
@@ -574,6 +572,7 @@ class BinningSurrogate(BaseSurrogate):
 
         Removed features get contribution = 0.
         """
+        self._check_is_fitted()
         return self._raw_contributions(X) - self.mean_contributions_
 
     # ── Bin structure for scorecard ───────────────────────────

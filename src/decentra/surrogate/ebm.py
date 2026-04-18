@@ -72,9 +72,11 @@ class EBMSurrogate(BaseSurrogate):
         return self
 
     def predict(self, X):
+        self._check_is_fitted()
         return self.model_.predict(X)
 
     def contributions(self, X):
+        self._check_is_fitted()
         el = self.model_.explain_local(X)
         n_samples = len(X) if hasattr(X, '__len__') else X.shape[0]
         n_features = len(el._internal_obj['specific'][0]['scores'])
