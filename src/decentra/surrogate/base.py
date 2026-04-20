@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+import pandas as pd
 from scipy.stats import spearmanr
 
 from ..stats import TrainingStats
@@ -16,7 +17,7 @@ class BaseSurrogate(ABC):
 
     All surrogates store training data statistics in ``training_stats_``
     (a :class:`TrainingStats` instance) for downstream use
-    (effort normalization in SIC, distribution monitoring, etc.).
+    (effort normalization in interventional fidelity, distribution monitoring, etc.).
 
     Monotone constraints
     --------------------
@@ -85,6 +86,38 @@ class BaseSurrogate(ABC):
         feature_names = self._feature_names(X)
         order = np.argsort(np.abs(contribs), axis=1)[:, ::-1]
         return feature_names[order]
+
+    def adverse_contributions(self, X, target_scale="score"):
+        """Per-feature adverse contributions with column names.
+
+        "Adverse" = pushes toward rejection (higher P(default)). This is a
+        scale-normalized wrapper around :meth:`contributions` so downstream
+        metrics can assume ``adverse_sign=+1`` regardless of the surrogate's
+        internal training target.
+
+        Parameters
+        ----------
+        X : array-like
+        target_scale : {"score", "logit"}, default="score"
+            "score": the surrogate was trained on a credit-score target
+            (higher score = better, so lower contribution = adverse).
+            "logit": the surrogate was trained on log-odds
+            (higher logit = higher default prob = adverse, so sign is
+            preserved).
+
+        Returns
+        -------
+        pandas.DataFrame of shape (n_samples, n_features)
+            columns = feature names; value > 0 means the feature pushed the
+            sample toward rejection.
+        """
+        contribs = np.asarray(self.contributions(X))
+        sign = -1 if target_scale == "score" else +1
+        names = self._feature_names(X)
+        index = X.index if hasattr(X, "index") else None
+        return pd.DataFrame(
+            sign * contribs, columns=list(names), index=index
+        )
 
     def adverse_features(self, X):
         """Features with negative contribution (감점요소), per sample.

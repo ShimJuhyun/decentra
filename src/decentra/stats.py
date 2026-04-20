@@ -108,7 +108,7 @@ class TrainingStats:
         return stats
 
     def get_stds(self):
-        """Return {feature_name: std} dict (for SIC-SC effort normalization)."""
+        """Return {feature_name: std} dict (for interventional-fidelity effort normalization)."""
         return {name: fs.std for name, fs in self.features.items()}
 
     def summary(self):

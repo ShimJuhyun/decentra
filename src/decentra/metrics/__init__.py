@@ -6,7 +6,21 @@ from .attribution import (
     attribution_fidelity,
     random_baseline_advtopk,
 )
-from .interventional import compute_sic_sc, extract_bin_structure
+from .interventional import (
+    interventional_fidelity,
+    median_intervention_fidelity,
+    compute_sic_sc,          # legacy alias
+    extract_bin_structure,
+)
+from .named import (
+    align_attributions,
+    AlignmentInfo,
+    topk_named,
+    advtopk_named,
+    advfull_named,
+    random_baseline_advtopk_named,
+    attribution_fidelity_named,
+)
 
 __all__ = [
     "prediction_fidelity",
@@ -15,6 +29,15 @@ __all__ = [
     "advfull",
     "attribution_fidelity",
     "random_baseline_advtopk",
+    "interventional_fidelity",
+    "median_intervention_fidelity",
     "compute_sic_sc",
     "extract_bin_structure",
+    "align_attributions",
+    "AlignmentInfo",
+    "topk_named",
+    "advtopk_named",
+    "advfull_named",
+    "random_baseline_advtopk_named",
+    "attribution_fidelity_named",
 ]

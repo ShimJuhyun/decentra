@@ -49,15 +49,21 @@ class ScorecardModel:
        Bin structure + scores are fixed. training_stats_ and
        mean_contributions_ are automatically computed.
 
-    2. **fit(X_train, y_binary)**: Compute deployment-ready state.
-       Stores training_stats_, mean_contributions_, and population-level
-       reason code rankings. Call once before deployment.
+    2. **fit(X_train, y_binary=None, build_display=False)**: Compute
+       deployment-ready state. Stores training_stats_ and
+       mean_contributions_. When ``build_display=True`` and ``y_binary``
+       is provided, also builds a display ``Scorecard`` into
+       ``self.scorecard_``. Call once before deployment.
 
     3. **transform(X_new)**: Apply fitted scorecard to new data.
        Returns predictions, centered contributions, adverse features,
        and contribution rankings.
 
     4. **fit_transform(X_train, y_binary)**: fit + transform on same data.
+
+    Display ``Scorecard`` (bin counts, target rates, reason codes) is an
+    orthogonal concern — request it explicitly via ``build_display=True``
+    or by calling ``self.scorecard(X, y_binary)`` when needed.
 
     Examples
     --------
@@ -81,19 +87,24 @@ class ScorecardModel:
 
     # ── fit / transform / fit_transform ───────────────────────
 
-    def fit(self, X, y_binary=None):
+    def fit(self, X, y_binary=None, build_display=False):
         """Prepare scorecard for deployment.
 
         - Compute mean_contributions_ for centering
         - Store training_stats_ (feature distributions)
-        - Build display Scorecard if y_binary provided
+        - Optionally build display Scorecard (opt-in)
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Training data (same data used in to_scorecard_model).
         y_binary : array-like of shape (n_samples,), optional
-            Binary target. If provided, stores Scorecard display object.
+            Binary target. Required when ``build_display=True``.
+        build_display : bool, default=False
+            If True and ``y_binary`` is provided, build a display
+            ``Scorecard`` into ``self.scorecard_``. Off by default to keep
+            ``fit`` cheap for CV / serving paths. Use
+            ``self.scorecard(X, y_binary)`` for explicit on-demand builds.
 
         Returns
         -------
@@ -103,7 +114,7 @@ class ScorecardModel:
         self.mean_contributions_ = np.mean(raw, axis=0)
         self.training_stats_ = TrainingStats.from_data(X)
 
-        if y_binary is not None:
+        if build_display and y_binary is not None:
             from .scorecard import Scorecard
             self.scorecard_ = Scorecard.from_scorecard_model(
                 self, X, np.asarray(y_binary)
@@ -247,7 +258,10 @@ class ScorecardModel:
     def scorecard(self, X, y_binary):
         """Build a display Scorecard from this model + observed data.
 
-        Convenience method. Equivalent to fit(X, y_binary).scorecard_
+        Explicit on-demand builder. Equivalent to calling
+        ``fit(X, y_binary, build_display=True)`` then reading
+        ``self.scorecard_``, but returns the Scorecard directly and does
+        not mutate fit state.
         """
         from .scorecard import Scorecard
         return Scorecard.from_scorecard_model(self, X, y_binary)
