@@ -1,6 +1,6 @@
-# Decentra
+# Dexa
 
-Decentra is a Decision-Oriented Machine Learning framework 
+DEXA is Decision and eXplainable AI Learning framework 
 for bridging predictive models and decision-making systems.
 
 It wraps existing models (e.g., LightGBM, EBM) and transforms them into 
